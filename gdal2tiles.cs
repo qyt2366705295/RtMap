@@ -46,10 +46,8 @@ namespace RtMap
 
                     try
                     {
-                        // 获取用户选择的目录所在的盘符(例如"D:\")
-                        string driveRoot = Path.GetPathRoot(fbd.SelectedPath);
                         string sessionName = "Task_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                        string autoOutputDir = Path.Combine(driveRoot, "RtMap_TileCache", sessionName);
+                        string autoOutputDir = Path.Combine(AppConfig.Instance.Paths.TileCacheRoot, sessionName);
 
                         // 自动填入文本框
                         txtOutputDir.Text = autoOutputDir;
@@ -276,8 +274,8 @@ namespace RtMap
             {
                 ProcessStartInfo psi = new ProcessStartInfo();
 
-                psi.FileName = @"D:\software\anaconda\python.exe";
-                string gdalScriptPath = @"D:\software\anaconda\Scripts\gdal2tiles.py";
+                psi.FileName = AppConfig.Instance.Paths.PythonExe;
+                string gdalScriptPath = AppConfig.Instance.Paths.Gdal2TilesPy;
 
                 // 构造命令: -p mercator 表示输出TMS(EPSG:3857)瓦片, -w none不生成多余的html
                 //psi.Arguments = $"\"{gdalScriptPath}\" -p mercator -w none \"{inputTif}\" \"{outputDir}\"";
@@ -321,13 +319,6 @@ namespace RtMap
 
         private void UploadTilesToSftp(string localTileDir, string folderName, string remoteBaseDir)
         {
-            // 服务器信息
-            string host = "183.6.74.124";
-            int port = 26422;
-            string username = "root";
-            string password = "Zkyt@2023";
-            //string remoteBaseDir = "/data/nfs/bucket/nest/szlt_wd";
-
             try
             {
                 var srv = AppConfig.Instance.Server;
@@ -335,7 +326,6 @@ namespace RtMap
                 {
                     sftp.Connect();
 
-                    // 拼接出远端的目标目录（例如：/data/nfs/bucket/nest/szlt_wd/影像1）
                     string remoteTargetDir = remoteBaseDir + "/" + folderName;
 
                     // 递归上传整个本地切片文件夹到远端
@@ -439,8 +429,7 @@ namespace RtMap
                         txtInputDir.Text = selectedTask.local_result_path;
                         //txtInputDir.Enabled = false;
 
-                        string driveRoot = Path.GetPathRoot(selectedTask.local_result_path);
-                        txtOutputDir.Text = Path.Combine(driveRoot, "RtMap_TileCache", "Task_" + selectedTask.exec_id);
+                        txtOutputDir.Text = Path.Combine(AppConfig.Instance.Paths.TileCacheRoot, "Task_" + selectedTask.exec_id);
                         //txtOutputDir.Enabled = false;
                     }
                     else
@@ -648,7 +637,7 @@ namespace RtMap
 
         private void UploadSingleFileWithTargetDir(string localFilePath, string remoteTargetDir, string remoteFilePath)
         {
-            string host = "183.6.74.124"; int port = 26422; string username = "root"; string password = "Zkyt@2023";
+
             try
             {
                 var srv = AppConfig.Instance.Server;
@@ -671,10 +660,6 @@ namespace RtMap
 
         private void UploadSingleFileToSftp(string localFilePath, string remoteTargetDir)
         {
-            string host = "183.6.74.124";
-            int port = 26422;
-            string username = "root";
-            string password = "Zkyt@2023";
 
             try
             {

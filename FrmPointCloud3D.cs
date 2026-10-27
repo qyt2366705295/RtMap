@@ -30,7 +30,6 @@ namespace RtMap
 
         private void FrmPointCloud3D_Load(object sender, EventArgs e)
         {
-            InitializeComponent();
             chkLocalMode.CheckedChanged += ChkLocalMode_CheckedChanged;
             ToggleInfoPathByDefault();
             this.FormClosing += FrmPointCloud3D_FormClosing;
@@ -204,9 +203,8 @@ namespace RtMap
             try
             {
                 // 初始化工作空间目录
-                string driveRoot = Path.GetPathRoot(AppDomain.CurrentDomain.BaseDirectory);
-                string localPtsDir = Path.Combine(driveRoot, "3DData", "Pts", execId);
-                string workspaceDir = Path.Combine(driveRoot, "3DWorkspace", execId);
+                string localPtsDir = Path.Combine(AppConfig.Instance.Paths.PointCloudRoot, execId);
+                string workspaceDir = Path.Combine(AppConfig.Instance.Paths.Workspace3DRoot, execId);
                 string localTilesOutputDir = Path.Combine(workspaceDir, "3DTiles");
 
                 Directory.CreateDirectory(localPtsDir);

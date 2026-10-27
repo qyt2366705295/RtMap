@@ -28,11 +28,6 @@ namespace RtMap
         // 记忆库，用来记录哪些远程文件已经下载过了
         private HashSet<string> _downloadedFiles = new HashSet<string>();
 
-        private readonly string host = "183.6.74.124";
-        private readonly int port = 26422;
-        private readonly string username = "root";
-        private readonly string password = "Zkyt@2023";
-
         public FrmImageDownloader()
         {
             InitializeComponent();
@@ -41,17 +36,13 @@ namespace RtMap
 
             // 手动模式下，允许用户自由修改服务器路径
             var MonitorCfg = AppConfig.Instance.Monitor;
-            //txtInputDir.Text = "/data/docker-shuzilvtu/szlt-wd-picture";
             txtInputDir.Text = MonitorCfg.DefaultRemotePictureDir;
             txtInputDir.Enabled = true;
 
             try
             {
-                // 获取当前软件运行所在的盘符
-                string driveRoot = Path.GetPathRoot(AppDomain.CurrentDomain.BaseDirectory);
 
-                // 拼接默认的手动下载目录：D:\testdata\Manual_Download
-                txtOutputDir.Text = Path.Combine(driveRoot, "testdata", "Manual_Download");
+                txtOutputDir.Text = Path.Combine(AppConfig.Instance.Paths.ImageRoot, "Manual_Download");
             }
             catch (Exception ex)
             {
@@ -73,8 +64,7 @@ namespace RtMap
 
             try
             {
-                string driveRoot = Path.GetPathRoot(AppDomain.CurrentDomain.BaseDirectory);
-                string defaultLocalPath = Path.Combine(driveRoot, "testdata", task.exec_id);
+                string defaultLocalPath = Path.Combine(AppConfig.Instance.Paths.ImageRoot, task.exec_id);
                 txtOutputDir.Text = defaultLocalPath;
             }
             catch (Exception ex)
@@ -127,13 +117,12 @@ namespace RtMap
             if (chkLocalSource.Checked)
             {
                 label1.Text = "本地输入路径";
-                txtInputDir.Text = @"C:\incoming";
+                txtInputDir.Text = AppConfig.Instance.Paths.LocalInputRoot;
             }
             else
             {
                 label1.Text = "服务器路径";
                 var MonitorCfg = AppConfig.Instance.Monitor;
-                //txtInputDir.Text = "/data/docker-shuzilvtu/szlt-wd-picture";
                 txtInputDir.Text = MonitorCfg.DefaultRemotePictureDir;
             }
         }
@@ -194,7 +183,7 @@ namespace RtMap
                     try
                     {
                         Directory.CreateDirectory(localPath);
-                        string sourceXml = @"D:\testdata\camera_paras\DJI_Video\camera.xml";
+                        string sourceXml = Path.Combine(AppConfig.Instance.Paths.CameraParametersRoot, "DJI_Video", "camera.xml");
                         string targetXml = Path.Combine(localPath, "camera.xml");
                         if (File.Exists(sourceXml))
                         {
@@ -292,7 +281,7 @@ namespace RtMap
                 string parentDir = Directory.GetParent(localImageDir).FullName;
 
                 // 存放标准配置文件库的路径
-                string baseTemplateDir = @"D:\testdata\camera_paras";
+                string baseTemplateDir = AppConfig.Instance.Paths.CameraParametersRoot;
 
                 if (rdoSlm.Checked)
                 {
@@ -537,7 +526,7 @@ namespace RtMap
             try
             {
                 ProcessStartInfo videoPsi = new ProcessStartInfo();
-                videoPsi.FileName = @"D:\software\video_samp\video_sampler.exe";
+                videoPsi.FileName = AppConfig.Instance.Paths.VideoSamplerExe;
                 // 传参给抽帧工具，向工作空间目录高频输出frame_开头的照片，时间间隔为0.5秒
                 videoPsi.Arguments = $"\"{videoPath}\" \"{destDir}\" 0.5";
                 videoPsi.CreateNoWindow = true;
@@ -699,11 +688,10 @@ namespace RtMap
 
             try
             {
-                string driveRoot = Path.GetPathRoot(localImageDir);
 
                 string dateFolder = "Sfm_" + DateTime.Now.ToString("yyyyMMdd");
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string workspaceDir = Path.Combine(driveRoot, "Sfm_workspace", dateFolder, $"Proj_{timestamp}");
+                string workspaceDir = Path.Combine(AppConfig.Instance.Paths.SfmWorkspaceRoot, dateFolder, $"Proj_{timestamp}");
                 string dbPath = Path.Combine(workspaceDir, "proj.db");
 
                 string expectedLocalResultDir = Path.Combine(workspaceDir, "OutputOrtho");
@@ -717,8 +705,8 @@ namespace RtMap
                     TaskBridge.SaveOrUpdateTask(_currentTask); // 更新本地json文件
                 }
 
-                string exePath = @"D:\MSVCProj\sfm_onthefly\x64\Release\OtFRunner.exe";
-                string workDir = @"D:\MSVCProj\sfm_onthefly\x64\Release";
+                string exePath = AppConfig.Instance.Paths.OtFRunnerExe;
+                string workDir = Path.GetDirectoryName(exePath);
 
                 ProcessStartInfo psi = new ProcessStartInfo();
                 psi.FileName = exePath;
@@ -741,13 +729,7 @@ namespace RtMap
 
         private string ConvertToWslPath(string winPath)
         {
-            if (string.IsNullOrWhiteSpace(winPath)) return string.Empty;
-
-            // 提取盘符并转小写
-            string drive = winPath.Substring(0, 1).ToLower();
-            string restPath = winPath.Substring(3).Replace("\\", "/");
-
-            return $"/mnt/{drive}/{restPath}";
+            return AppConfig.Instance.Wsl.ConvertWindowsPath(winPath);
         }
 
         private void UpdateSlmConfigIni(string iniPath, string wslImages, string wslWorkdir, string wslOutput)
@@ -781,7 +763,7 @@ namespace RtMap
 
         private void btnLaunchSlm_Click(object sender, EventArgs e)
         {
-            string localImageDir = txtOutputDir.Text; // 自动生成的D:\testdata\exec_xxx
+            string localImageDir = txtOutputDir.Text;
 
             if (string.IsNullOrWhiteSpace(localImageDir) || !Directory.Exists(localImageDir))
             {
@@ -799,7 +781,7 @@ namespace RtMap
                 }
                 string workdirPath = workDirInfo.FullName;
 
-                // 检查并定位配置文件：D:\testdata\config\config.ini
+                // Slm 配置位于影像目录的上级目录。
                 string iniFilePath = Path.Combine(workdirPath, "config", "config.ini");
                 if (!File.Exists(iniFilePath))
                 {
@@ -807,9 +789,8 @@ namespace RtMap
                     return;
                 }
 
-                string driveRoot = Path.GetPathRoot(localImageDir);
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string outputDir = Path.Combine(driveRoot, "Sfm_workspace", $"Slm_{timestamp}");
+                string outputDir = Path.Combine(AppConfig.Instance.Paths.SfmWorkspaceRoot, $"Slm_{timestamp}");
 
                 string expectedLocalResultDir = Path.Combine(outputDir, "gtiff");
 
@@ -829,11 +810,11 @@ namespace RtMap
                 }
 
                 ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = "wsl.exe";
-                string wslDistroName = "Ubuntu-22.04";
-                string linuxCodeDir = "/home/dys/code/orthophoto/";
+                psi.FileName = AppConfig.Instance.Paths.WslExe;
+                string wslDistroName = AppConfig.Instance.Wsl.Distribution;
+                string linuxCodeDir = AppConfig.Instance.Wsl.CodeDirectory;
 
-                string pythonCmd = $"python3 main.py --workdir {workdirWslPath}";
+                string pythonCmd = $"{AppConfig.Instance.Wsl.PythonCommand} main.py --workdir {workdirWslPath}";
                 string bashScript = $"echo '----------------------------------------'; " +
                                     $"echo '二维实时成图模块RtMap_Slm已就绪'; " +
                                     $"echo '即将执行代码: {pythonCmd}'; " +

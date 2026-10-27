@@ -45,3 +45,7 @@ Desktop.ini
 # 发布与打包生成文件
 # ==============================
 publish/
+
+# 每台机器单独维护的配置；仓库只保留 example 模板
+AppSettings.json
+active_tasks.json

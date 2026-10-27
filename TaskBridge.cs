@@ -30,7 +30,7 @@ namespace RtMap
 
     public static class TaskBridge
     {
-        private static readonly string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "active_tasks.json");
+        private static string dbPath => Path.Combine(AppConfig.Instance.Paths.StateDirectory, "active_tasks.json");
         private static object _lock = new object(); // 防止多线程同时读写冲突
 
         // 获取本地记录的所有任务
@@ -59,6 +59,7 @@ namespace RtMap
                 {
                     tasks.Add(newTask); // 新增
                 }
+                Directory.CreateDirectory(Path.GetDirectoryName(dbPath));
                 File.WriteAllText(dbPath, JsonConvert.SerializeObject(tasks, Formatting.Indented));
             }
         }
@@ -89,7 +90,8 @@ namespace RtMap
             {
                 var uosCfg = AppConfig.Instance.Uos;
                 // 路径清洗
-                string cleanPath = rawResultPath.Replace(uosCfg.PathPrefixToRemove, "");
+                string cleanPath = string.IsNullOrEmpty(uosCfg.PathPrefixToRemove)
+                    ? rawResultPath : rawResultPath.Replace(uosCfg.PathPrefixToRemove, "");
                 if (!cleanPath.EndsWith("/")) cleanPath += "/";
                 string finalResultPath = cleanPath + tileFolderName;
 
@@ -103,7 +105,6 @@ namespace RtMap
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 // 发送POST请求
-                //string apiUrl = "http://183.6.74.124:48585/gateway/geoai-uos-service/nest-api/v2/szlt/domBuildComplete";
                 HttpResponseMessage response = await httpClient.PostAsync(uosCfg.ApiUrl, content);
 
                 if (response.IsSuccessStatusCode)

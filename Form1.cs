@@ -80,8 +80,8 @@ namespace RtMap
                 //}
 
                 ProcessStartInfo serverInfo = new ProcessStartInfo();
-                serverInfo.FileName = @"D:\software\RtMapView\Release\RtMapView\server.exe";
-                serverInfo.WorkingDirectory = @"D:\software\RtMapView\Release\RtMapView";
+                serverInfo.FileName = AppConfig.Instance.Paths.ViewerExe;
+                serverInfo.WorkingDirectory = Path.GetDirectoryName(AppConfig.Instance.Paths.ViewerExe);
                 
                 // 根据情况，如果不想显示黑框，可以隐藏它
                 serverInfo.CreateNoWindow = true;
@@ -108,13 +108,7 @@ namespace RtMap
 
         private string ConvertToWslPath(string winPath)
         {
-            if (string.IsNullOrWhiteSpace(winPath)) return string.Empty;
-
-            // 提取盘符并转小写
-            string drive = winPath.Substring(0, 1).ToLower();
-            string restPath = winPath.Substring(3).Replace("\\", "/");
-
-            return $"/mnt/{drive}/{restPath}";
+            return AppConfig.Instance.Wsl.ConvertWindowsPath(winPath);
         }
 
         private void UpdateSlmConfigIni(string iniPath, string wslImages, string wslWorkdir, string wslOutput)
@@ -176,12 +170,12 @@ namespace RtMap
                 UpdateSlmConfigIni(iniFilePath, imagesWslPath, workdirWslPath, outputWslPath);
 
                 ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = "wsl.exe";
-                string wslDistroName = "Ubuntu-22.04";
-                string linuxCodeDir = "/home/dys/code/orthophoto/";
+                psi.FileName = AppConfig.Instance.Paths.WslExe;
+                string wslDistroName = AppConfig.Instance.Wsl.Distribution;
+                string linuxCodeDir = AppConfig.Instance.Wsl.CodeDirectory;
 
                 //psi.Arguments = $"-d {wslDistroName} --cd {linuxCodeDir} -e python3 main.py --workdir {workdirWslPath}";
-                string pythonCmd = $"python3 main.py --workdir {workdirWslPath}";
+                string pythonCmd = $"{AppConfig.Instance.Wsl.PythonCommand} main.py --workdir {workdirWslPath}";
                 string bashScript = $"echo '----------------------------------------'; " +
                             $"echo '二维实时成图模块RtMap_Slm已就绪'; " +
                             $"echo '即将执行代码: {pythonCmd}'; " +
@@ -215,8 +209,7 @@ namespace RtMap
         {
             try
             {
-                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string configPath = Path.Combine(appDataPath, "mipmap-realtime-2d", "config.json");
+                string configPath = AppConfig.Instance.Paths.Mip2DConfig;
 
                 if (!File.Exists(configPath))
                 {
@@ -249,7 +242,7 @@ namespace RtMap
             try
             {
                 ProcessStartInfo mipInfo = new ProcessStartInfo();
-                mipInfo.FileName = @"D:\software\Mipmap\RtMap_Mip\RtMap-Mip.exe";
+                mipInfo.FileName = AppConfig.Instance.Paths.Mip2DExe;
                 Process.Start(mipInfo);
                 System.Threading.Thread.Sleep(1500);
             }
@@ -261,12 +254,8 @@ namespace RtMap
 
         private void btnRtMap_Sfm_Click(object sender, EventArgs e)
         {
-            //string exePath = @"D:\MSVCProj\sfm_onthefly\x64\RelWithDebInfo\UI.exe";
-            //string workDir = @"D:\MSVCProj\sfm_onthefly\x64\RelWithDebInfo";
-            string exePath = @"D:\MSVCProj\sfm_onthefly\x64\Release\UI.exe";
-            string workDir = @"D:\MSVCProj\sfm_onthefly\x64\Release";
-            //string thirdPartyPath = @"D:\MSVCProj\sfm_onthefly\thirdparty";
-            //string baseLibPath = @"D:\MSVCProj\BaseLib";
+            string exePath = AppConfig.Instance.Paths.SfmUiExe;
+            string workDir = Path.GetDirectoryName(exePath);
 
             if (!File.Exists(exePath))
             {
@@ -386,8 +375,8 @@ namespace RtMap
                 return;
             }
 
-            string moduleFolderA = @"D:\MODEL";
-            string moduleFolderB = @"D:\software\MODEL";
+            string moduleFolderA = AppConfig.Instance.Paths.LasModuleDirectoryA;
+            string moduleFolderB = AppConfig.Instance.Paths.LasModuleDirectoryB;
             if (isSlotAFree)
             {
                 RunLasInstance(moduleFolderA, lasPath, mapPath, outPath, ref processLasA);
@@ -400,29 +389,6 @@ namespace RtMap
             {
                 MessageBox.Show("系统繁忙！当前已达到最大并发数，请等待其中一个任务完成后再试。");
             }
-
-            /*
-            string moduleFolder = @"D:\MODEL";
-            string iniFilePath = Path.Combine(moduleFolder, "setting.ini");
-            string exeFilePath = Path.Combine(moduleFolder, "三维重建.exe");
-
-            try
-            {
-                UpdateLasSettingIni(iniFilePath, lasPath, mapPath, outPath);
-
-                ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = exeFilePath;
-                psi.WorkingDirectory = moduleFolder;
-
-                // psi.CreateNoWindow = true;
-                // psi.UseShellExecute = false;
-
-                Process.Start(psi);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("RtSen_Las启动失败：" + ex.Message);
-            }*/
 
         }
 
@@ -448,8 +414,7 @@ namespace RtMap
         {
             try
             {
-                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string configPath = Path.Combine(appDataPath, "mipmap-realtime-3d", "config.json");
+                string configPath = AppConfig.Instance.Paths.Mip3DConfig;
 
                 if (!File.Exists(configPath))
                 {
@@ -483,7 +448,7 @@ namespace RtMap
             try
             {
                 ProcessStartInfo mipInfo = new ProcessStartInfo();
-                mipInfo.FileName = @"D:\software\Mipmap\RtSen_Mip\RtSen-Mip.exe";
+                mipInfo.FileName = AppConfig.Instance.Paths.Mip3DExe;
                 Process.Start(mipInfo);
                 System.Threading.Thread.Sleep(1500);
             }

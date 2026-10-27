@@ -26,15 +26,8 @@ namespace RtMap
 
         private static ConcurrentDictionary<string, bool> _runningAutomationTasks = new ConcurrentDictionary<string, bool>();
 
-        private readonly string host = "183.6.74.124";
-        private readonly int port = 26422;
-        private readonly string user = "root";
-        private readonly string pass = "Zkyt@2023";
-
-
-        //private const string DEFAULT_REMOTE_PATH = "/data/docker-shuzilvtu/szlt-wd-picture/start/info";
         private string DEFAULT_REMOTE_PATH => AppConfig.Instance.Monitor.DefaultRemoteInfoDir;
-        private const string DEFAULT_LOCAL_PATH = @"Z:\start\info";
+        private string DEFAULT_LOCAL_PATH => AppConfig.Instance.Monitor.DefaultLocalInfoDir;
 
         public FrmMainControl()
         {
@@ -95,7 +88,6 @@ namespace RtMap
                 UpdateStatus("监控已停止。");
             }
         }
-
 
         private static string _lastInfoPath = AppConfig.Instance.Monitor.DefaultRemoteInfoDir;
         private void MonitorInfoDirectory(string remoteInfoDir, CancellationToken token)
@@ -275,8 +267,7 @@ namespace RtMap
             try
             {
                 // --------- 阶段1：环境初始化与下传路径自动映射 ---------
-                string driveRoot = Path.GetPathRoot(AppDomain.CurrentDomain.BaseDirectory);
-                string localImageDir = Path.Combine(driveRoot, "testdata", execId);
+                string localImageDir = Path.Combine(AppConfig.Instance.Paths.ImageRoot, execId);
                 Directory.CreateDirectory(localImageDir);
 
                 downloadCts = new CancellationTokenSource();
@@ -298,7 +289,7 @@ namespace RtMap
                     UpdateStatus($"[任务{execId}] 检测到视频流，拉起后台实时抽帧引擎...");
 
                     ProcessStartInfo videoPsi = new ProcessStartInfo();
-                    videoPsi.FileName = @"D:\software\video_samp\video_sampler.exe";
+                    videoPsi.FileName = AppConfig.Instance.Paths.VideoSamplerExe;
                     videoPsi.Arguments = $"\"{targetVideoPath}\" \"{localImageDir}\" 0.5";
                     videoPsi.CreateNoWindow = true;
                     videoPsi.UseShellExecute = false;
@@ -332,7 +323,7 @@ namespace RtMap
                         UpdateStatus($"[任务{execId}] 检测到视频流，拉起后台实时抽帧引擎...");
 
                         ProcessStartInfo videoPsi = new ProcessStartInfo();
-                        videoPsi.FileName = @"D:\software\video_samp\video_sampler.exe";
+                        videoPsi.FileName = AppConfig.Instance.Paths.VideoSamplerExe;
                         videoPsi.Arguments = $"\"{targetVideoPath}\" \"{localImageDir}\" 0.5";
                         videoPsi.CreateNoWindow = true;
                         videoPsi.UseShellExecute = false;
@@ -458,7 +449,7 @@ namespace RtMap
 
                 // --------- 阶段2：自动规划Sfm成果输出路径 ---------
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string workspaceDir = Path.Combine(driveRoot, "Sfm_workspace", $"Proj_{execId}_{timestamp}");
+                string workspaceDir = Path.Combine(AppConfig.Instance.Paths.SfmWorkspaceRoot, $"Proj_{execId}_{timestamp}");
                 string dbPath = Path.Combine(workspaceDir, $"{execId}.db");
                 string expectedLocalResultDir = Path.Combine(workspaceDir, "OutputOrtho"); // Tif生成目录
 
@@ -638,7 +629,7 @@ namespace RtMap
         {
             Directory.CreateDirectory(localImageDir);
             string parentDir = Directory.GetParent(localImageDir).FullName;
-            string baseTemplateDir = @"D:\testdata\camera_paras";
+            string baseTemplateDir = AppConfig.Instance.Paths.CameraParametersRoot;
 
             if (algorithm == "Slm")
             {
@@ -847,8 +838,8 @@ namespace RtMap
         // 移植自FrmImageDownloader：纯后台启动Sfm解算引擎进程
         private Process LaunchEngineHeadless(string dbPath, string localImageDir)
         {
-            string exePath = @"D:\MSVCProj\sfm_onthefly\x64\Release\OtFRunner.exe";
-            string workDir = @"D:\MSVCProj\sfm_onthefly\x64\Release";
+            string exePath = AppConfig.Instance.Paths.OtFRunnerExe;
+            string workDir = Path.GetDirectoryName(exePath);
 
             if (!File.Exists(exePath)) throw new FileNotFoundException("找不到处理引擎OtFRunner.exe程序！");
 
@@ -898,8 +889,8 @@ namespace RtMap
 
                 // 调用本地Anaconda的Python多线程快速切片
                 ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = @"D:\software\anaconda\python.exe";
-                string gdalScript = @"D:\software\anaconda\Scripts\gdal2tiles.py";
+                psi.FileName = AppConfig.Instance.Paths.PythonExe;
+                string gdalScript = AppConfig.Instance.Paths.Gdal2TilesPy;
                 psi.Arguments = $"\"{gdalScript}\" -p mercator -w none \"{tifPath}\" \"{tileOutputDir}\"";
                 psi.CreateNoWindow = true;
                 psi.UseShellExecute = false;
@@ -1033,8 +1024,6 @@ namespace RtMap
         {
             if (_runningAutomationTasks.Count == 0) return;
 
-            string host = "183.6.74.124"; int port = 26422; string user = "root"; string pass = "Zkyt@2023";
-
             try
             {
                 // 判断最后一次记录的info路径是本地路径还是Linux远程路径
@@ -1099,7 +1088,7 @@ namespace RtMap
             try
             {
                 string dateStr = DateTime.Now.ToString("yyyyMMdd");
-                string targetBaseDir = $@"Z:\Sfm_{dateStr}";
+                string targetBaseDir = Path.Combine(AppConfig.Instance.Paths.SharedOutputRoot, $"Sfm_{dateStr}");
                 string targetExecDir = Path.Combine(targetBaseDir, execId);
 
                 if (!Directory.Exists(targetExecDir))

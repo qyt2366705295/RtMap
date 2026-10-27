@@ -14,7 +14,7 @@ namespace RtMap
         private static readonly object _lock = new object();
 
         // 默认配置文件路径
-        public static string DefaultConfigPath => @"D:\testdata\camera_paras\camera_map.json";
+        public static string DefaultConfigPath => AppConfig.Instance.Paths.CameraMapFile;
 
         public static CameraMapConfig Load(string configPath = null)
         {

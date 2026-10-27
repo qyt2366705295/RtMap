@@ -137,7 +137,7 @@
             this.txtInfoPath.Name = "txtInfoPath";
             this.txtInfoPath.Size = new System.Drawing.Size(350, 43);
             this.txtInfoPath.TabIndex = 42;
-            this.txtInfoPath.Text = "/data/docker-shuzilvtu/szlt-wd-picture/start/info";
+            this.txtInfoPath.Text = "";
             // 
             // label1
             // 

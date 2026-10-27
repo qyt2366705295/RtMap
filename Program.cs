@@ -16,6 +16,15 @@ namespace RtMap
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            try
+            {
+                AppConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "RtMap 配置错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             Application.Run(new RtMap());
         }
     }

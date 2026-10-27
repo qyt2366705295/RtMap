@@ -66,7 +66,7 @@
             this.txtInputDir.Name = "txtInputDir";
             this.txtInputDir.Size = new System.Drawing.Size(350, 43);
             this.txtInputDir.TabIndex = 24;
-            this.txtInputDir.Text = "/data/docker-shuzilvtu/szlt-wd-picture";
+            this.txtInputDir.Text = "";
             // 
             // label2
             // 

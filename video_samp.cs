@@ -66,7 +66,7 @@ namespace RtMap
                 return;
             }
 
-            string exePath = @"D:\software\video_samp\video_sampler.exe";
+            string exePath = AppConfig.Instance.Paths.VideoSamplerExe;
             if (!File.Exists(exePath))
             {
                 MessageBox.Show("找不到抽帧程序，请检查系统配置！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
