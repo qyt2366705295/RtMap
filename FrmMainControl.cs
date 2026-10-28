@@ -889,12 +889,24 @@ namespace RtMap
 
                 // 调用本地Anaconda的Python多线程快速切片
                 ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = AppConfig.Instance.Paths.PythonExe;
-                string gdalScript = AppConfig.Instance.Paths.Gdal2TilesPy;
-                psi.Arguments = $"\"{gdalScript}\" -p mercator -w none \"{tifPath}\" \"{tileOutputDir}\"";
+
+                string condaBase = AppConfig.Instance.Paths.PythonExe;
+                string libraryBin = Path.Combine(condaBase, @"Library\bin");
+                string scriptsDir = Path.Combine(condaBase, "Scripts");
+                string projLib = Path.Combine(condaBase, @"Library\share\proj");
+
+                string currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+                psi.EnvironmentVariables["PATH"] = $"{libraryBin};{scriptsDir};{condaBase};{currentPath}";
+                psi.EnvironmentVariables["PROJ_LIB"] = projLib;
+                psi.EnvironmentVariables["GDAL_DATA"] = Path.Combine(condaBase, @"Library\share\gdal");
+
+                psi.FileName = Path.Combine(condaBase, "python.exe");
+                string gdalScriptPath = Path.Combine(condaBase, @"Scripts\gdal2tiles.py");
+
+                psi.Arguments = $"\"{gdalScriptPath}\" -p mercator -w none \"{tifPath}\" \"{tileOutputDir}\"";
                 psi.CreateNoWindow = true;
                 psi.UseShellExecute = false;
-
+                
                 using (Process proc = Process.Start(psi))
                 {
                     proc.WaitForExit();

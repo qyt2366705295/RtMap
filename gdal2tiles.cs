@@ -272,17 +272,24 @@ namespace RtMap
         {
             try
             {
+                // 调用本地Anaconda的Python多线程快速切片
                 ProcessStartInfo psi = new ProcessStartInfo();
 
-                psi.FileName = AppConfig.Instance.Paths.PythonExe;
-                string gdalScriptPath = AppConfig.Instance.Paths.Gdal2TilesPy;
+                string condaBase = AppConfig.Instance.Paths.PythonExe;
+                string libraryBin = Path.Combine(condaBase, @"Library\bin");
+                string scriptsDir = Path.Combine(condaBase, "Scripts");
+                string projLib = Path.Combine(condaBase, @"Library\share\proj");
 
-                // 构造命令: -p mercator 表示输出TMS(EPSG:3857)瓦片, -w none不生成多余的html
-                //psi.Arguments = $"\"{gdalScriptPath}\" -p mercator -w none \"{inputTif}\" \"{outputDir}\"";
-                // 启用多线程
-                psi.Arguments = $"\"{gdalScriptPath}\" -p mercator -w none --processes=8 \"{inputTif}\" \"{outputDir}\"";
+                string currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+                psi.EnvironmentVariables["PATH"] = $"{libraryBin};{scriptsDir};{condaBase};{currentPath}";
+                psi.EnvironmentVariables["PROJ_LIB"] = projLib;
+                psi.EnvironmentVariables["GDAL_DATA"] = Path.Combine(condaBase, @"Library\share\gdal");
 
-                psi.CreateNoWindow = true; // 纯后台静默切片
+                psi.FileName = Path.Combine(condaBase, "python.exe");
+                string gdalScriptPath = Path.Combine(condaBase, @"Scripts\gdal2tiles.py");
+
+                psi.Arguments = $"\"{gdalScriptPath}\" -p mercator -w none \"{inputTif}\" \"{outputDir}\"";
+                psi.CreateNoWindow = true;
                 psi.UseShellExecute = false;
 
                 using (Process proc = Process.Start(psi))
