@@ -289,8 +289,10 @@ namespace RtMap
                     UpdateStatus($"[任务{execId}] 检测到视频流，拉起后台实时抽帧引擎...");
 
                     ProcessStartInfo videoPsi = new ProcessStartInfo();
-                    videoPsi.FileName = AppConfig.Instance.Paths.VideoSamplerExe;
-                    videoPsi.Arguments = $"\"{targetVideoPath}\" \"{localImageDir}\" 0.5";
+                    string videoSamplerDir = Path.GetDirectoryName(AppConfig.Instance.Paths.VideoSamplerExe);
+                    string parentDir = Path.GetDirectoryName(videoSamplerDir);
+                    videoPsi.FileName = Path.Combine(parentDir, "UAVStreamReader_exe", "UAVStreamReader.exe");
+                    videoPsi.Arguments = $"--sa \"{targetVideoPath}\" --op \"{localImageDir.TrimEnd('\\')}\\\"";
                     videoPsi.CreateNoWindow = true;
                     videoPsi.UseShellExecute = false;
                     Process vProc = Process.Start(videoPsi);
