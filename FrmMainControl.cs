@@ -306,7 +306,7 @@ namespace RtMap
                     hasHandle = true;
                 }
 
-                if (isLocalMode)
+                if (!hasHandle)
                 {
                     if (File.Exists(task.image_path) && (task.image_path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) || task.image_path.EndsWith(".avi", StringComparison.OrdinalIgnoreCase)))
                     {
@@ -319,14 +319,14 @@ namespace RtMap
                     }
 
                     // 如果是视频流任务，实行异步非阻塞流式处理
-                    if (targetVideoPath != null && !hasHandle)
+                    if (targetVideoPath != null)
                     {
                         isVideoTask = true;
                         UpdateStatus($"[任务{execId}] 检测到视频流，拉起后台实时抽帧引擎...");
 
                         ProcessStartInfo videoPsi = new ProcessStartInfo();
                         videoPsi.FileName = AppConfig.Instance.Paths.VideoSamplerExe;
-                        videoPsi.Arguments = $"\"{targetVideoPath}\" \"{localImageDir}\" 0.5";
+                        videoPsi.Arguments = $"\"{targetVideoPath}\" \"{localImageDir}\" 1.0";
                         videoPsi.CreateNoWindow = true;
                         videoPsi.UseShellExecute = false;
                         Process vProc = Process.Start(videoPsi);
@@ -337,16 +337,20 @@ namespace RtMap
                             vProc.WaitForExit();
                             vProc.Dispose();
                         });
+                        hasHandle = true;
                     }
                     else
                     {
-                        // 普通本地照片文件夹拷贝监控
-                        downloadWorker = Task.Run(() => MonitorLocalDirectoryHeadless(task.image_path, localImageDir, downloadCts.Token, task.exec_id));
+                        if (isLocalMode)
+                        {
+                            // 普通本地照片文件夹拷贝监控
+                            downloadWorker = Task.Run(() => MonitorLocalDirectoryHeadless(task.image_path, localImageDir, downloadCts.Token, task.exec_id));
+                        }
+                        else
+                        {
+                            downloadWorker = Task.Run(() => MonitorRemoteDirectoryHeadless(task.image_path, localImageDir, downloadCts.Token));
+                        }
                     }
-                }
-                else
-                {
-                    downloadWorker = Task.Run(() => MonitorRemoteDirectoryHeadless(task.image_path, localImageDir, downloadCts.Token));
                 }
 
                 // 自动化默认缺省配置：使用Sfm算法，相机类型S6100_X_40

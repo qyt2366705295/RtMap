@@ -528,7 +528,7 @@ namespace RtMap
                 ProcessStartInfo videoPsi = new ProcessStartInfo();
                 videoPsi.FileName = AppConfig.Instance.Paths.VideoSamplerExe;
                 // 传参给抽帧工具，向工作空间目录高频输出frame_开头的照片，时间间隔为0.5秒
-                videoPsi.Arguments = $"\"{videoPath}\" \"{destDir}\" 0.5";
+                videoPsi.Arguments = $"\"{videoPath}\" \"{destDir}\" 1.0";
                 videoPsi.CreateNoWindow = true;
                 videoPsi.UseShellExecute = false;
 
